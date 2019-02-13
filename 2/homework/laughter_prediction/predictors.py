@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.externals import joblib
 from sklearn.preprocessing import StandardScaler
+from model.MultiInputRNN import MultiInputRNN
 
 
 class Predictor:
@@ -74,9 +75,15 @@ class StrictLargeXgboostPredictor(XgboostPredictor):
 
 
 class RnnPredictor(Predictor):
-    # Your code here
-    def predict(self, X):
-        pass
+
+    def predict(self, X, threshold=0.5):
+        probs = self.predict_proba(X)
+        return probs >= threshold
 
     def predict_proba(self, X):
-        pass
+        mfcc, fbank = X
+        mfcc_features = mfcc.size(-1)
+        fbank_features = fbank.size(-1)
+        model = MultiInputRNN(mfcc_features, fbank_features)
+        _, prob_total = model(mfcc, fbank)
+        return prob_total
