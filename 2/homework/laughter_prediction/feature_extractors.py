@@ -46,6 +46,7 @@ class LibrosaExtractor(FeatureExtractor):
     # extracts MFCC and Mel spectrogram features
     def extract_features(self, wav_path):
         rate, data = wavfile.read(wav_path)
+        data = data.astype(np.float32)
         data_len = data.shape[0]
         frame = int(rate * self.frame_length)
         return pd.DataFrame(np.array([
