@@ -6,8 +6,7 @@ import pandas as pd
 import scipy.io.wavfile as wav
 
 from laughter_classification.utils import chunks, in_any, interv_to_range, get_sname
-
-from laughter_prediction.sample_audio import sample_wav_by_time
+from laughter_prediction.feature_extractors import LibrosaExtractor
 
 
 class SSPNetDataSampler:
@@ -69,7 +68,8 @@ class SSPNetDataSampler:
         :param frame_sec: int, length of each frame in sec
         :return: pandas.DataFrame with sampled audio
         """
-        data = sample_wav_by_time(wav_path, frame_sec)
+        # data = sample_wav_by_time(wav_path, frame_sec)
+        data = LibrosaExtractor(frame_sec).extract_features(wav_path)
         labels = self.get_labels_for_file(wav_path, frame_sec)
         df = pd.concat([data, labels], axis=1)
         return df

@@ -37,9 +37,9 @@ class PyAAExtractor(FeatureExtractor):
         return feature_df
 
 
-class Extractor(FeatureExtractor):
+class LibrosaExtractor(FeatureExtractor):
 
-    def __init__(self, frame_length, frame_step=20):
+    def __init__(self, frame_length, frame_step=1000):
         self.frame_length = frame_length
         self.step = frame_step
 
@@ -48,10 +48,9 @@ class Extractor(FeatureExtractor):
         rate, data = wavfile.read(wav_path)
         data_len = data.shape[0]
         frame = int(rate * self.frame_length)
-        return np.array(
+        return pd.DataFrame(np.array([
             [np.mean(librosa.feature.mfcc(data[start: start + frame], rate).T, axis=0)
-             for start in range(0, data_len - frame + 1, self.step)]
-        ), np.array(
+             for start in range(0, data_len - frame + 1, self.step)],
             [np.mean(librosa.feature.melspectrogram(data[start: start + frame], rate), axis=0)
              for start in range(0, data_len - frame + 1, self.step)]
-        )
+        ]))
