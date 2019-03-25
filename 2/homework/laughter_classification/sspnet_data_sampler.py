@@ -6,8 +6,7 @@ import pandas as pd
 import scipy.io.wavfile as wav
 
 from laughter_classification.utils import chunks, in_any, interv_to_range, get_sname
-
-from laughter_prediction.sample_audio import sample_wav_by_time
+from laughter_prediction.feature_extractors import LibrosaExtractor
 
 
 class SSPNetDataSampler:
@@ -62,14 +61,19 @@ class SSPNetDataSampler:
                            'SNAME': sname})
         return df
 
-    def df_from_file(self, wav_path, frame_sec):
+    def df_from_file(self, wav_path, frame_sec, index=None):
         """
         Returns sampled data by path to audio file
         :param wav_path: string, .wav file path
         :param frame_sec: int, length of each frame in sec
+        :param index: Tuple(int, int, int), current file number, logging step, total number of files
         :return: pandas.DataFrame with sampled audio
         """
-        data = sample_wav_by_time(wav_path, frame_sec)
+        # data = sample_wav_by_time(wav_path, frame_sec)
+        if index is not None and (index[0] + 1) % index[1] == 0:
+            print(f"processed {index[0]}/{index[2]} files")
+
+        data = LibrosaExtractor(frame_sec).extract_features(wav_path)
         labels = self.get_labels_for_file(wav_path, frame_sec)
         df = pd.concat([data, labels], axis=1)
         return df
@@ -88,8 +92,12 @@ class SSPNetDataSampler:
         :param force_save: boolean, if you want to override file with same name
         :return:
         """
+        if save_path is not None and os.path.isfile(save_path):
+            print('loading df: ', save_path)
+            return pd.read_csv(save_path)
         fullpaths = self.get_valid_wav_paths()[:naudio]
-        dataframes = [self.df_from_file(wav_path, frame_sec) for wav_path in fullpaths]
+        dataframes = [self.df_from_file(wav_path, frame_sec, index=(i, len(fullpaths) / 100, len(fullpaths)))
+                      for i, wav_path in enumerate(fullpaths)]
         df = pd.concat(dataframes)
 
         colnames = ["V{}".format(i) for i in range(df.shape[1] - 2)]
